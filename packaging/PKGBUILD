@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (C) 2026 1sSay
+pkgname=asus-zenbook-fan-driver
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Userspace HealthyTable fan driver for ASUS Zenbook UX425QA/UM425QA only'
+arch=('x86_64')
+url='https://github.com/1sSay/asus-zenbook-fan-driver'
+license=('GPL-3.0-or-later' 'MIT' '0BSD')
+depends=('glibc' 'python' 'systemd')
+makedepends=('gcc' 'make')
+source=("$pkgname-$pkgver.tar.gz::$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz" 'LICENSE')
+sha256sums=('RELEASE_CHECKSUM' 'PACKAGING_CHECKSUM')
+
+build() {
+  make -C "$pkgname-$pkgver"
+}
+
+check() {
+  make -C "$pkgname-$pkgver" check
+}
+
+package() {
+  make -C "$pkgname-$pkgver" DESTDIR="$pkgdir" install
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/packaging.LICENSE"
+}

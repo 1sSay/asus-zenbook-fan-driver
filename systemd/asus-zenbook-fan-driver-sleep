@@ -1,0 +1,19 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# system-sleep hooks run before the actual kernel suspend/hibernate operation.
+set -eu
+marker=/run/asus-zenbook-fan-driver-resume
+case "$1" in
+ pre)
+  if systemctl is-active --quiet asus-zenbook-fan-driver.service; then
+   touch "$marker"
+   systemctl stop asus-zenbook-fan-driver.service
+  fi
+  ;;
+ post)
+  if test -f "$marker"; then
+   rm -f "$marker"
+   systemctl start asus-zenbook-fan-driver.service
+  fi
+  ;;
+esac

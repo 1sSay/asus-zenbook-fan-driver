@@ -1,0 +1,9 @@
+build/
+stage/
+dist/
+__pycache__/
+*.pyc
+*.pkg.tar.*
+packaging/src/
+packaging/pkg/
+packaging/*.tar.gz

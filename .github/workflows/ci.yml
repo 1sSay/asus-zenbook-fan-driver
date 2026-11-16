@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: build-and-test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make check
+      - run: make DESTDIR="$PWD/stage" install
+      - run: test -x stage/usr/bin/asus-zenbook-fan-driver && test -f stage/usr/lib/systemd/system/asus-zenbook-fan-driver.service
