@@ -85,7 +85,8 @@ every three seconds. Compatibility fields remain `updated_at` (Unix seconds)
 and `fan_rpms` (two integers or nulls). Errors publish nulls, never fake zeroes;
 zero RPM is valid. Additional fields describe errors, boot ID and monotonic age.
 CLI rejects malformed data, future/stale timestamps, a different boot and data
-older than ten seconds. Runtime files disappear on a final service stop.
+older than ten seconds. A stopped service leaves null telemetry and preserves any failed-recovery lease
+until successful recovery or reboot. Runtime files live only in /run.
 
 Existing Quickshell remains a client without modifications: temperatures stay
 in the bar; RPM stays in the resources popup. It already accepts the compatibility
@@ -103,7 +104,8 @@ Before upgrade or removal, run `restore-auto` if a maximum test is active, then
 `sudo systemctl stop asus-zenbook-fan-driver.service`. Upgrade using pacman,
 `daemon-reload`, then start the service. To remove, disable the service and
 `sudo pacman -R asus-zenbook-fan-driver`; daemon-reload afterwards. Removing an
-active service with raw file deletion is not supported. The package never
+active service with raw file deletion is not supported. After verified recovery,
+stopped-service runtime files may be removed with `sudo rm -r /run/asus-fan-rpm`. The package never
 automatically enables the service. Keep legacy backups until migration is tested.
 To roll back, stop/disable the new service before restoring/enabling the old one.
 

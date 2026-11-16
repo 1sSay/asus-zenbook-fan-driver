@@ -18,6 +18,8 @@ check: all
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARN) -D_POSIX_C_SOURCE=200809L -Isrc -include tests/fake_io.h -c src/control.c -o build/fake-control.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARN) -Isrc tests/control.c build/fake-transport.o build/fake-protocol.o build/fake-control.o src/sensors.c src/maximum.c $(LDFLAGS) -o build/test-control
 	./build/test-control
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARN) -D_DEFAULT_SOURCE -Isrc tests/lifecycle.c build/fake-transport.o build/fake-protocol.o build/fake-control.o src/sensors.c src/maximum.c $(LDFLAGS) -o build/test-lifecycle
+	./build/test-lifecycle
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' -v
 install: all
 	install -Dm755 build/ec-worker $(DESTDIR)$(PREFIX)/lib/asus-zenbook-fan-driver/ec-worker

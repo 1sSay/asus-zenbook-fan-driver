@@ -6,6 +6,11 @@
 * `make check`: actual modular C protocol and control implementations linked to
   simulated EC I/O; Python telemetry age, corruption, zero RPM and UID policy
   tests. No root or hardware required.
+* Real process lifecycle against simulated EC: worker SIGKILL, supervisor
+  SIGTERM/SIGKILL, stopped-worker deadline and normal completion; all recover
+  mode 0. Timings are scaled for testing; EC is simulated in shared memory.
+* Real Python daemon process with fake hardware worker: UNIX socket permissions,
+  denied unknown request, zero RPM publication and SIGTERM shutdown.
 * `make DESTDIR=stage install`: only staged `/usr` paths, no service activation.
 * Clean Arch package build: see `packaging/VALIDATION.md` for the separately
   recorded container build result. Cached release source is checksum-verified;
