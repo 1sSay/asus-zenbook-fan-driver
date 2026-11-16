@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
  while(!stopping && fgets(line,sizeof(line),stdin)) {
    if(stopping) break;
    interrupted=0;
-   int result=1, rpm[2];
+   int result=1, auto_ok=0, rpm[2];
    if(!verified_controller()) { puts("{\"ok\":false,\"error\":\"unsupported controller or EC failure\"}"); continue; }
    if(!strcmp(line,"poll\n")) {
      if(read_pair(rpm)) puts("{\"ok\":false,\"error\":\"EC read failed\"}");
@@ -55,12 +55,13 @@ int main(int argc, char **argv) {
    if(!strcmp(line,"max\n")) {
      int lease=read_register(0x31)==0 ? open(LEASE,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600) : -1;
      if(lease>=0) { close(lease); result=run_max(); }
-     if(read_register(0x31)==0) unlink(LEASE);
+     auto_ok=read_register(0x31)==0;
+     if(auto_ok) unlink(LEASE);
    }
    else if(!strcmp(line,"auto\n")) {
-     result=restore_auto(); if(result==0) unlink(LEASE);
+     result=restore_auto(); auto_ok=result==0; if(auto_ok) unlink(LEASE);
    }
-   printf("{\"ok\":%s,\"auto_restored\":%s}\n",result==0?"true":"false",result==0?"true":"false");
+   printf("{\"ok\":%s,\"auto_restored\":%s}\n",result==0?"true":"false",auto_ok?"true":"false");
    interrupted=0;
  }
  ioperm(DATA_PORT,2,0); close(lock); return 0;
