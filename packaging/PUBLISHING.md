@@ -32,6 +32,41 @@ utility files, tests, documentation, CI and packaging.
 For a new local staging checkout use `git init -b master`. A prepared local
 AUR checkout is in `dist/aur/` (not part of upstream source or Git history).
 
+## Checking an installation with doctor
+
+For every updated source candidate run `make check`, then stage without root:
+
+```
+stage=$(mktemp -d)
+make DESTDIR="$stage" install
+python3 "$stage/usr/bin/asus-zenbook-fan-driver" --help
+```
+
+Staged help must include `doctor` and `--json`. Fixture tests in `make check`
+cover the doctor report and CLI output without equipment or a systemd manager.
+Running staged `doctor` directly inspects the live `/usr`, `/sys` and `/run`,
+not the staged tree; it is not a package-content verification command.
+No service should be started for build, check or staged installation.
+
+After an approved real package installation, run the following as an ordinary
+user to inspect the installed paths, DMI, manager and public telemetry:
+
+```
+asus-zenbook-fan-driver doctor
+asus-zenbook-fan-driver doctor --json
+```
+
+Before explicit service activation expect inactive/missing telemetry findings.
+In a container without a systemd manager expect an inconclusive service check.
+Exit 0 means required checks passed, 1 means a detected problem, and 2 means
+inconclusive without a detected problem (invalid arguments also use 2).
+See README for the JSON schema and safety/visibility limits. A DMI match or
+successful report does not replace hardware acceptance or prove EC exclusivity.
+
+These changes do not refresh the prepared v0.1.0 tag/archive/checksums. Follow
+step 2 before publishing an updated candidate; packaging remains export-ignored
+so archive checksums do not depend on packaging contents.
+
 ## Prepared release description
 
 Experimental 0.1.0: restricted userspace HealthyTable driver for the tested
