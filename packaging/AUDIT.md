@@ -3,7 +3,9 @@
 
 Status: the standalone repository is public and experimental 0.1.1 is published
 with explicit owner approval. The source downloads anonymously with the expected
-SHA256. AUR submission awaits owner registration/key setup. See VALIDATION.md.
+SHA256. AUR submission is deferred because registration is temporarily blocked;
+the owner requested GitHub-only distribution with an installation guide.
+See VALIDATION.md.
 No live installation, service activation or hardware test was done.
 
 ## Licensing
@@ -72,6 +74,7 @@ References:
    availability, regenerate .SRCINFO with makepkg, and review the AUR diff.
    On branch master, submit only PKGBUILD, .SRCINFO and the packaging LICENSE.
    No application Git history, source archive or built package belongs in AUR.
+   This step is deferred; it does not block installation from GitHub.
 
 The follow-up preparation completed clean-container/namcap checks and attempted
 AUR authentication (rejected publickey). The owner has no AUR account yet; a

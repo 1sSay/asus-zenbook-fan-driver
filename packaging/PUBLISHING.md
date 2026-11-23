@@ -3,8 +3,10 @@
 
 The standalone GitHub repository became public on 2026-11-23 with explicit owner
 approval. Experimental [v0.1.1](https://github.com/1sSay/asus-zenbook-fan-driver/releases/tag/v0.1.1)
-is published. AUR submission awaits owner account registration and public-key
-setup. Do not publish the desktop-config repository or its history. The
+is published. AUR submission is deferred at the owner's request because AUR
+registration is temporarily blocked. Installation is available directly from
+the GitHub release with the recipe bundle and [Russian guide](../docs/INSTALL.ru.md).
+Do not publish the desktop-config repository or its history. The
 standalone repository contains reviewed utility files, tests, documentation,
 CI and packaging. The following procedure also applies to future releases.
 

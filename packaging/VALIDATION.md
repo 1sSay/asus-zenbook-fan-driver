@@ -157,3 +157,26 @@ A dedicated local SSH pair was created; only its public half was provided to
 the owner. The prepared `dist/aur-0.1.1/` master checkout contains exactly
 PKGBUILD, .SRCINFO and the 0BSD LICENSE. AUR authentication/push awaits the
 owner's registration and key addition; no AUR package is claimed published.
+
+## GitHub installation guide — 2026-11-23
+
+The owner reports that AUR registration is temporarily blocked and requests
+GitHub distribution instead. AUR submission is deferred; no further account
+setup or push is attempted as part of this step.
+
+Added docs/INSTALL.ru.md with Arch x86_64 installation from GitHub, exact DMI
+checks, review/checksum/build instructions, explicit service activation,
+diagnostics, profiles, optional GUI, recovery, upgrade and removal. No maximum
+test is part of the install walkthrough. README links the guide.
+
+The supplemental release asset
+`asus-zenbook-fan-driver-0.1.1-arch-build.tar.gz` contains exactly the previously
+tested PKGBUILD/.SRCINFO/0BSD LICENSE, byte-for-byte. The archive layout is fixed
+and timestamps are zero. The source archive and its existing SHA256 remain
+unchanged. INSTALL.ru.md is also provided as a standalone release attachment;
+SHA256SUMS lists all three artifacts without hashing itself.
+
+Verified recipe-file equality and makepkg --printsrcinfo. make check and staged
+install were run for this documentation update; tests use only fake EC/worker
+implementations. The guide's hardware/service/administrator commands are
+instructions for the owner, not acceptance tests executed here.

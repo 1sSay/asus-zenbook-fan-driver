@@ -17,6 +17,16 @@ Further hardware acceptance is currently deferred; the exact DMI/controller
 allowlist above remains unchanged. See [remaining work](docs/ROADMAP.md) and
 [release notes](CHANGELOG.md).
 
+## Install from GitHub (Arch Linux, no AUR required)
+
+[Download experimental v0.1.1](https://github.com/1sSay/asus-zenbook-fan-driver/releases/tag/v0.1.1)
+and follow the [step-by-step installation guide (Russian)](docs/INSTALL.ru.md).
+Use the release's `asus-zenbook-fan-driver-0.1.1-arch-build.tar.gz` recipe bundle:
+review its PKGBUILD, run `makepkg --syncdeps --check` as your ordinary user,
+then install the resulting package with `sudo pacman -U`. It downloads the
+fixed release source and checks its SHA256. No AUR account or helper is needed.
+The package does not automatically start or enable the service.
+
 ## Build and use
 
 Requires Linux x86_64, a C11 compiler, make, Python 3. On Arch install
