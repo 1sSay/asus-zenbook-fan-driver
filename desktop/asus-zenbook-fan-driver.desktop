@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Type=Application
+Name=ASUS Zenbook fans
+Comment=Fan telemetry and authorized cooling profiles
+Exec=/usr/bin/python3 -I /usr/lib/asus-zenbook-fan-driver/gui.py
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;Monitor;

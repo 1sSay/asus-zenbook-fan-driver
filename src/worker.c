@@ -62,12 +62,17 @@ int main(int argc, char **argv) {
    if(!verified_controller()) { puts("{\"ok\":false,\"error\":\"unsupported controller or EC failure\"}"); continue; }
    if(!strcmp(line,"poll\n")) {
      if(read_pair(rpm)) puts("{\"ok\":false,\"error\":\"EC read failed\"}");
-     else printf("{\"ok\":true,\"fan_rpms\":[%d,%d]}\n",rpm[0],rpm[1]);
+     else {
+       int mode=read_register(0x31);
+       printf("{\"ok\":true,\"fan_rpms\":[%d,%d],\"mode\":\"%s\"}\n",rpm[0],rpm[1],
+              mode==0 ? "auto" : mode==1 ? "manual" : "unknown");
+     }
      continue;
    }
    if(!strcmp(line,"max\n")) {
      int lease=read_register(0x31)==0 ? open(LEASE,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600) : -1;
      if(lease>=0) { close(lease); result=run_max(); }
+     else if(access(LEASE,F_OK)==0) (void)restore_auto();
      auto_ok=read_register(0x31)==0;
      if(auto_ok) unlink(LEASE);
    }
@@ -89,8 +94,14 @@ int main(int argc, char **argv) {
      puts("{\"ok\":false,\"error\":\"invalid control command\"}");
      continue;
    }
-   printf("{\"ok\":%s,\"auto_restored\":%s}\n",result==0?"true":"false",auto_ok?"true":"false");
+   printf("{\"ok\":%s,\"auto_restored\":%s,\"error\":%s}\n",result==0?"true":"false",auto_ok?"true":"false",result==0 ? "null" : "\"EC control failed; inspect journal for recovery details\"");
    interrupted=0;
  }
- ioperm(DATA_PORT,2,0); close(lock); return 0;
+ /* A named profile also owns a lease; stopping must restore it. */
+ int cleanup_failed=0;
+ if(access(LEASE,F_OK)==0) {
+   if(!verified_controller() || restore_auto()) cleanup_failed=1;
+   else if(unlink(LEASE)) cleanup_failed=1;
+ }
+ ioperm(DATA_PORT,2,0); close(lock); return cleanup_failed;
 }

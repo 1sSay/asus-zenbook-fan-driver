@@ -21,7 +21,7 @@ WORKER = '/usr/lib/asus-zenbook-fan-driver/ec-worker'
 def validate(data):
     values = data.get('fan_rpms')
     if not data.get('ok') or not isinstance(values, list) or len(values) != 2:
-        raise ValueError('EC read failed')
+        raise ValueError(data.get('error') or 'EC read failed')
     if any(type(x) is not int or not 0 <= x <= 20000 for x in values):
         raise ValueError('Invalid RPM')
     return values
@@ -29,6 +29,7 @@ def validate(data):
 
 CURVES = {
     'quiet': ((0, 80), (50, 100), (60, 120), (70, 140), (80, 153)),
+    'balanced': ((0, 100), (50, 120), (60, 153), (70, 180), (80, 200)),
     'performance': ((0, 140), (45, 160), (55, 180), (65, 200), (75, 217)),
 }
 HYSTERESIS_C = 3
@@ -86,12 +87,16 @@ def curve_status(profile):
     return [{'from_c': threshold, 'duty': duty} for threshold, duty in CURVES[profile]]
 
 
-def publish(values, error=None, control='auto', temperature=None, duty=None, path=RUNTIME / 'status.json'):
+def publish(values, error=None, control='unknown', temperature=None, duty=None, path=None, state=None):
+    path = RUNTIME / 'status.json' if path is None else path
     data = {'updated_at': time.time(), 'fan_rpms': values, 'error': error,
             'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
             'updated_monotonic': time.monotonic(),
             'control': {'mode': control, 'temperature_c': temperature, 'duty': duty,
                         'curve': curve_status(control)}}
+    data['schema_version'] = 1
+    if state is not None:
+        data.update(state)
     tmp = path.with_suffix('.tmp')
     tmp.write_text(json.dumps(data) + '\n')
     tmp.chmod(0o644)
@@ -99,7 +104,7 @@ def publish(values, error=None, control='auto', temperature=None, duty=None, pat
 
 
 def authorized(command, uid):
-    return command in ('max', 'auto', 'quiet', 'performance') and uid == 0
+    return command in ('max', 'auto', 'quiet', 'balanced', 'performance') and uid == 0
 
 
 class Driver:
@@ -107,7 +112,28 @@ class Driver:
         self.lock = threading.Lock()
         self.stop = threading.Event()
         self.slots = threading.BoundedSemaphore(8)
-        self.profile = 'auto'
+        self.profile = 'unknown'
+        self.mode = 'unknown'
+        self.active_operation = None
+        self.last_control = None
+        self.last_recovery = None
+        self.control_error = None
+        self.recovery_error = ('Outstanding manual lease; recovery unverified'
+                               if (RUNTIME / 'manual-lease').exists() else None)
+        self.startup_lease = (RUNTIME / 'manual-lease').exists()
+        try:
+            previous = json.loads((RUNTIME / 'status.json').read_text())
+            boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+            if isinstance(previous, dict) and previous.get('boot_id') == boot:
+                for field in ('control_error', 'recovery_error', 'last_control', 'last_recovery'):
+                    value = previous.get(field)
+                    expected = str if field.endswith('error') else dict
+                    if value is None or isinstance(value, expected):
+                        setattr(self, field, value)
+        except (OSError, ValueError):
+            pass
+        if self.startup_lease:
+            self.recovery_error = 'Outstanding manual lease; recovery unverified'
         self.duty = None
         self.duty_changed_at = None
         self.worker = subprocess.Popen([WORKER, '--service-worker'], stdin=subprocess.PIPE,
@@ -127,9 +153,82 @@ class Driver:
             if not c:
                 raise RuntimeError('Hardware worker exited')
             if c == b'\n':
-                return json.loads(response)
+                result = json.loads(response)
+                if not isinstance(result, dict) or type(result.get('ok')) is not bool:
+                    self.shutdown()
+                    raise ValueError('Invalid worker response')
+                return result
             response.extend(c)
+        self.shutdown()
         raise ValueError('Oversized worker response')
+
+    def snapshot(self, values, error=None, temperature=None):
+        publish(values, error, self.mode, temperature, self.duty, state={
+            'control': {'mode': self.mode, 'profile': self.profile if self.profile in CURVES else None,
+                        'temperature_c': temperature, 'duty': self.duty,
+                        'curve': curve_status(self.profile)},
+            'active_operation': self.active_operation, 'last_control': self.last_control,
+            'last_recovery': self.last_recovery, 'control_error': self.control_error,
+            'recovery_error': self.recovery_error})
+
+    def record_result(self, command, result):
+        ok = result.get('ok') is True
+        self.last_control = {'command': command, 'ok': ok, 'updated_at': time.time(),
+                             'error': None if ok else result.get('error') or 'Control failed'}
+        self.control_error = self.last_control['error']
+        if result.get('auto_restored') is True:
+            self.mode, self.profile, self.duty = 'auto', 'auto', None
+            self.recovery_error = None
+            self.last_recovery = {'ok': True, 'updated_at': time.time(), 'error': None}
+        elif command in CURVES and ok:
+            self.mode = 'manual'
+        else:
+            self.mode, self.profile, self.duty = 'unknown', 'unknown', None
+            self.recovery_error = result.get('error') or 'Automatic cooling could not be verified'
+            self.last_recovery = {'ok': False, 'updated_at': time.time(),
+                                  'error': self.recovery_error}
+
+    def execute(self, command):
+        # Caller holds the hardware lock. Errors survive subsequent RPM polls.
+        self.active_operation = command
+        self.snapshot([None, None], 'control operation')
+        try:
+            if command in CURVES:
+                temperature = cpu_temperature()
+                if temperature >= 95:
+                    raise ValueError('CPU temperature at or above 95 C; use firmware cooling')
+                duty = curve_duty(command, temperature)
+                result = self.rpc(f'set-{duty}')
+                self.record_result(command, result)
+                if result.get('ok'):
+                    self.profile, self.duty = command, duty
+                    self.duty_changed_at = time.monotonic()
+            else:
+                if command == 'max' and self.profile in CURVES:
+                    recovery = self.rpc('auto')
+                    self.record_result('auto', recovery)
+                    if recovery.get('auto_restored') is not True:
+                        raise RuntimeError(recovery.get('error') or 'Restore before maximum test failed')
+                result = self.rpc(command)
+                self.record_result(command, result)
+            return result
+        except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+            result = {'ok': False, 'error': str(exc)}
+            self.record_result(command, result)
+            # A failed sensor lookup may leave an earlier profile active.
+            # Never reuse a pipe after a deadline (rpc already stops the worker).
+            if not self.stop.is_set():
+                try:
+                    self.record_result('auto', self.rpc('auto'))
+                except (OSError, ValueError, RuntimeError, TimeoutError):
+                    pass
+                self.control_error = str(exc)
+                self.last_control = {'command': command, 'ok': False,
+                                     'updated_at': time.time(), 'error': str(exc)}
+            return result
+        finally:
+            self.active_operation = None
+            self.snapshot([None, None])
 
     def request(self, connection):
         try:
@@ -144,18 +243,7 @@ class Driver:
                 with self.lock:
                     if self.stop.is_set():
                         raise RuntimeError('Service stopping')
-                    publish([None, None], 'control operation', self.profile, duty=self.duty)
-                    if command in CURVES:
-                        temperature = cpu_temperature()
-                        duty = curve_duty(command, temperature)
-                        result = self.rpc(f'set-{duty}')
-                        if result.get('ok'):
-                            self.profile, self.duty = command, duty
-                            self.duty_changed_at = time.monotonic()
-                    else:
-                        result = self.rpc(command)
-                        if result.get('ok'):
-                            self.profile, self.duty = 'auto', None
+                    result = self.execute(command)
             connection.sendall(json.dumps(result).encode() + b'\n')
         except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
             try:
@@ -175,16 +263,32 @@ class Driver:
         temperature = None
         if self.profile in CURVES:
             temperature = cpu_temperature()
+            if temperature >= 95:
+                raise ValueError('CPU temperature at or above 95 C; returning to firmware cooling')
             now = time.monotonic()
             duty = next_duty(self.profile, temperature, self.duty,
                              self.duty_changed_at or now, now)
             if duty != self.duty:
                 result = self.rpc(f'set-{duty}')
                 if not result.get('ok'):
-                    raise RuntimeError('Curve update failed')
+                    self.record_result(self.profile, result)
+                    raise RuntimeError(result.get('error') or 'Curve update failed')
                 self.duty = duty
                 self.duty_changed_at = now
-        return validate(self.rpc('poll')), temperature
+        result = self.rpc('poll')
+        self.mode = 'unknown'
+        values = validate(result)
+        self.mode = result.get('mode') if result.get('mode') in ('auto', 'manual') else 'unknown'
+        if self.mode == 'auto':
+            self.profile, self.duty = 'auto', None
+            if self.startup_lease and not (RUNTIME / 'manual-lease').exists():
+                self.recovery_error = None
+                self.last_recovery = {'ok': True, 'updated_at': time.time(), 'error': None}
+            self.startup_lease = False
+            # Other recovery errors require an explicit verified restoration.
+        elif self.mode != 'manual' and self.profile in CURVES:
+            raise RuntimeError('Manual mode could not be verified')
+        return values, temperature
 
     def serve(self):
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -206,15 +310,19 @@ class Driver:
                     try:
                         try:
                             values, temperature = self.poll()
-                            publish(values, control=self.profile, temperature=temperature, duty=self.duty)
+                            self.snapshot(values, temperature=temperature)
                         except (ValueError, OSError, RuntimeError, TimeoutError) as exc:
                             if self.profile in CURVES:
-                                try:
-                                    self.rpc('auto')
-                                except (ValueError, OSError, RuntimeError, TimeoutError):
-                                    pass
-                                self.profile, self.duty = 'auto', None
-                            publish([None, None], str(exc), self.profile)
+                                self.record_result(self.profile, {'ok': False, 'error': str(exc)})
+                                if not self.stop.is_set():
+                                    try:
+                                        self.record_result('auto', self.rpc('auto'))
+                                    except (ValueError, OSError, RuntimeError, TimeoutError) as recovery:
+                                        self.record_result('auto', {'ok': False, 'error': str(recovery)})
+                                self.control_error = str(exc)
+                            else:
+                                self.mode = 'unknown'
+                            self.snapshot([None, None], str(exc))
                             # A timed-out pipe is no longer synchronized. Fail closed.
                             if isinstance(exc, TimeoutError):
                                 raise
@@ -231,9 +339,14 @@ class Driver:
                     conn.close()
         finally:
             self.shutdown()
-            # Worker/supervisor restores only if a maximum test was entered.
+            # Worker restores any outstanding manual lease, including profiles.
             self.worker.wait(timeout=35)
-            publish([None, None], 'service stopped', self.profile, duty=self.duty)
+            with self.lock:
+                self.mode, self.profile, self.duty = 'unknown', 'unknown', None
+                self.active_operation = None
+                if (RUNTIME / 'manual-lease').exists():
+                    self.recovery_error = 'Outstanding manual lease after service stop'
+                self.snapshot([None, None], 'service stopped')
             server.close()
             address.unlink(missing_ok=True)
 
