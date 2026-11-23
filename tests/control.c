@@ -43,7 +43,9 @@ void fake_outb(unsigned char value, unsigned short port) {
                 ++control_writes;
             }
             if (reg == 0x35) {
-                assert(mode == 1 && value == 255);
+                assert(mode == 1 && (value == 80 || value == 100 || value == 120 ||
+                                     value == 140 || value == 153 || value == 160 ||
+                                     value == 180 || value == 200 || value == 217 || value == 255));
                 duty[selected] = value;
                 ++control_writes;
             }
@@ -85,7 +87,12 @@ int main(void) {
     assert(write_control(0x35, 128) == -1);
     assert(write_control(0x32, 1) == -1);
     assert(write_control(0x31, 2) == -1);
+    assert(set_profile(159) == -1);
     assert(control_writes == before);
+    assert(set_profile(80) == 0 && mode == 1 && duty[0] == 80 && duty[1] == 80);
+    assert(restore_auto() == 0 && mode == 0);
+    assert(set_profile(217) == 0 && mode == 1 && duty[0] == 217 && duty[1] == 217);
+    assert(restore_auto() == 0 && mode == 0);
     inject_read_failure = 1;
     data = (struct measurement){0};
     assert(measure(&data) == -1 && !data.completed);

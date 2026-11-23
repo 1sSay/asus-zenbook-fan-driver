@@ -5,6 +5,7 @@
 import json
 import os
 from pathlib import Path
+import glob
 import select
 import signal
 import socket
@@ -26,10 +27,48 @@ def validate(data):
     return values
 
 
-def publish(values, error=None, path=RUNTIME / 'status.json'):
+CURVES = {
+    'quiet': ((0, 80), (50, 100), (60, 120), (70, 140), (80, 153)),
+    'performance': ((0, 140), (45, 160), (55, 180), (65, 200), (75, 217)),
+}
+
+
+def cpu_temperature():
+    for name in glob.glob('/sys/class/hwmon/hwmon*/name'):
+        try:
+            if Path(name).read_text().strip() != 'k10temp':
+                continue
+            value = int((Path(name).parent / 'temp1_input').read_text().strip())
+            if 0 < value < 125000:
+                return value / 1000
+        except (OSError, ValueError):
+            continue
+    raise ValueError('AMD k10temp CPU sensor unavailable')
+
+
+def curve_duty(profile, temperature):
+    if profile not in CURVES or not 0 < temperature < 125:
+        raise ValueError('Invalid profile or CPU temperature')
+    duty = CURVES[profile][0][1]
+    for threshold, candidate in CURVES[profile]:
+        if temperature < threshold:
+            break
+        duty = candidate
+    return duty
+
+
+def curve_status(profile):
+    if profile not in CURVES:
+        return []
+    return [{'from_c': threshold, 'duty': duty} for threshold, duty in CURVES[profile]]
+
+
+def publish(values, error=None, control='auto', temperature=None, duty=None, path=RUNTIME / 'status.json'):
     data = {'updated_at': time.time(), 'fan_rpms': values, 'error': error,
             'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
-            'updated_monotonic': time.monotonic()}
+            'updated_monotonic': time.monotonic(),
+            'control': {'mode': control, 'temperature_c': temperature, 'duty': duty,
+                        'curve': curve_status(control)}}
     tmp = path.with_suffix('.tmp')
     tmp.write_text(json.dumps(data) + '\n')
     tmp.chmod(0o644)
@@ -37,7 +76,7 @@ def publish(values, error=None, path=RUNTIME / 'status.json'):
 
 
 def authorized(command, uid):
-    return command in ('max', 'auto') and uid == 0
+    return command in ('max', 'auto', 'quiet', 'performance') and uid == 0
 
 
 class Driver:
@@ -45,6 +84,8 @@ class Driver:
         self.lock = threading.Lock()
         self.stop = threading.Event()
         self.slots = threading.BoundedSemaphore(8)
+        self.profile = 'auto'
+        self.duty = None
         self.worker = subprocess.Popen([WORKER, '--service-worker'], stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE, bufsize=0)
 
@@ -79,8 +120,17 @@ class Driver:
                 with self.lock:
                     if self.stop.is_set():
                         raise RuntimeError('Service stopping')
-                    publish([None, None], 'control operation')
-                    result = self.rpc(command)
+                    publish([None, None], 'control operation', self.profile, duty=self.duty)
+                    if command in CURVES:
+                        temperature = cpu_temperature()
+                        duty = curve_duty(command, temperature)
+                        result = self.rpc(f'set-{duty}')
+                        if result.get('ok'):
+                            self.profile, self.duty = command, duty
+                    else:
+                        result = self.rpc(command)
+                        if result.get('ok'):
+                            self.profile, self.duty = 'auto', None
             connection.sendall(json.dumps(result).encode() + b'\n')
         except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
             try:
@@ -95,6 +145,18 @@ class Driver:
         self.stop.set()
         if self.worker.poll() is None:
             self.worker.terminate()
+
+    def poll(self):
+        temperature = None
+        if self.profile in CURVES:
+            temperature = cpu_temperature()
+            duty = curve_duty(self.profile, temperature)
+            if duty != self.duty:
+                result = self.rpc(f'set-{duty}')
+                if not result.get('ok'):
+                    raise RuntimeError('Curve update failed')
+                self.duty = duty
+        return validate(self.rpc('poll')), temperature
 
     def serve(self):
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -115,9 +177,16 @@ class Driver:
                 if time.monotonic() >= next_poll and self.lock.acquire(blocking=False):
                     try:
                         try:
-                            publish(validate(self.rpc('poll')))
+                            values, temperature = self.poll()
+                            publish(values, control=self.profile, temperature=temperature, duty=self.duty)
                         except (ValueError, OSError, RuntimeError, TimeoutError) as exc:
-                            publish([None, None], str(exc))
+                            if self.profile in CURVES:
+                                try:
+                                    self.rpc('auto')
+                                except (ValueError, OSError, RuntimeError, TimeoutError):
+                                    pass
+                                self.profile, self.duty = 'auto', None
+                            publish([None, None], str(exc), self.profile)
                             # A timed-out pipe is no longer synchronized. Fail closed.
                             if isinstance(exc, TimeoutError):
                                 raise
@@ -136,7 +205,7 @@ class Driver:
             self.shutdown()
             # Worker/supervisor restores only if a maximum test was entered.
             self.worker.wait(timeout=35)
-            publish([None, None], 'service stopped')
+            publish([None, None], 'service stopped', self.profile, duty=self.duty)
             server.close()
             address.unlink(missing_ok=True)
 

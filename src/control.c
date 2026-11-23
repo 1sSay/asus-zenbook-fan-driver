@@ -18,8 +18,12 @@
 #include <sys/wait.h>
 #include "fan.h"
 int write_control(unsigned char reg, unsigned char value) {
-    /* Narrow allowlist: auto/manual mode and FULL duty only. */
-    if (!((reg == 0x31 && value <= 1) || (reg == 0x35 && value == 255)))
+    /* Narrow allowlist: auto/manual mode and named-curve duty points only. */
+    if (!((reg == 0x31 && value <= 1) ||
+          (reg == 0x35 && (value == 80 || value == 100 || value == 120 ||
+                           value == 140 || value == 153 || value == 160 ||
+                           value == 180 || value == 200 || value == 217 ||
+                           value == 255))))
         return -1;
     unsigned char status = inb(STATUS_PORT);
     if (status == 0xff || (status & 1)) return -1;
@@ -50,6 +54,19 @@ int restore_auto(void) {
     }
     fprintf(stderr, "ERROR: automatic cooling could not be verified. Run --restore-auto; if it fails, reboot.\n");
     return -1;
+}
+
+int set_profile(unsigned char duty) {
+    /* Named profiles only: callers cannot choose arbitrary PWM values. */
+    if (duty != 80 && duty != 100 && duty != 120 && duty != 140 &&
+        duty != 153 && duty != 160 && duty != 180 && duty != 200 &&
+        duty != 217 && duty != 255) return -1;
+    if (write_control(0x31, 1) || read_register(0x31) != 1) return -1;
+    for (int index = 0; index < 2; ++index) {
+        if (select_fan(index, 2) || write_control(0x35, duty) ||
+            read_register(0x35) != duty) return -1;
+    }
+    return 0;
 }
 
 int read_pair(int rpms[2]) {

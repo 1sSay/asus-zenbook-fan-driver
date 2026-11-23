@@ -48,4 +48,17 @@ class Telemetry(unittest.TestCase):
                 self.assertFalse(service.authorized(command, uid))
         self.assertTrue(service.authorized('max', 0))
         self.assertTrue(service.authorized('auto', 0))
+        self.assertTrue(service.authorized('quiet', 0))
+        self.assertTrue(service.authorized('performance', 0))
         self.assertFalse(service.authorized('arbitrary-pwm', 0))
+
+    def test_profile_curves(self):
+        self.assertEqual(service.curve_duty('quiet', 49), 80)
+        self.assertEqual(service.curve_duty('quiet', 70), 140)
+        self.assertEqual(service.curve_duty('quiet', 90), 153)
+        self.assertEqual(service.curve_duty('performance', 54), 160)
+        self.assertEqual(service.curve_duty('performance', 74), 200)
+        self.assertEqual(service.curve_duty('performance', 85), 217)
+        self.assertEqual(service.curve_status('quiet')[-1], {'from_c': 80, 'duty': 153})
+        with self.assertRaises(ValueError):
+            service.curve_duty('quiet', 0)

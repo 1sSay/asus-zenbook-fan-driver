@@ -32,14 +32,15 @@ def status(path=STATUS, now=None, monotonic=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['status', 'watch', 'test-max', 'restore-auto'])
+    parser.add_argument('command', choices=['status', 'watch', 'quiet', 'performance', 'test-max', 'restore-auto'])
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args()
-    if args.command in ('test-max', 'restore-auto'):
+    if args.command in ('quiet', 'performance', 'test-max', 'restore-auto'):
         with socket.socket(socket.AF_UNIX) as connection:
             connection.settimeout(40)
             connection.connect('/run/asus-fan-rpm/control.sock')
-            connection.sendall(b'max\n' if args.command == 'test-max' else b'auto\n')
+            command = {'test-max': 'max', 'restore-auto': 'auto'}.get(args.command, args.command)
+            connection.sendall((command + '\n').encode())
             response = connection.makefile('r').readline(8192)
             result = json.loads(response)
         print(json.dumps(result))
@@ -53,6 +54,12 @@ def main():
                              for i, v in enumerate(data['fan_rpms'])), flush=True)
             if data.get('error'):
                 print('Error: ' + str(data['error']), flush=True)
+            else:
+                print('Mode: ' + str(data.get('control', {}).get('mode', 'unknown')), flush=True)
+                curve = data.get('control', {}).get('curve', [])
+                if curve:
+                    print('Curve: ' + ', '.join(f">={item['from_c']}°C: {item['duty']}/255"
+                                               for item in curve), flush=True)
         if args.command != 'watch':
             return 1 if data.get('error') else 0
         time.sleep(3)
