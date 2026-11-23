@@ -41,6 +41,17 @@ def read_telemetry(path=STATUS, now=None, monotonic=None,
                 raise ValueError('Invalid ' + key)
     except (KeyError, TypeError, ValueError, OverflowError) as exc:
         raise TelemetryError('invalid', 'Invalid telemetry: ' + str(exc)) from exc
+    control = data.get('control')
+    if control is not None:
+        if not isinstance(control, dict) or control.get('mode') not in (
+                'auto', 'manual', 'unknown', 'quiet', 'balanced', 'performance'):
+            raise TelemetryError('invalid', 'Invalid control state')
+        curve = control.get('curve', [])
+        if not isinstance(curve, list) or any(
+                not isinstance(point, dict) or type(point.get('from_c')) not in (int, float)
+                or not math.isfinite(point['from_c']) or type(point.get('duty')) is not int
+                or not 0 <= point['duty'] <= 255 for point in curve):
+            raise TelemetryError('invalid', 'Invalid control curve')
     age = (time.time() if now is None else now) - data['updated_at']
     mono_age = (time.monotonic() if monotonic is None else monotonic) - data['updated_monotonic']
     if (data['boot_id'] != boot_path.read_text().strip()
@@ -191,14 +202,18 @@ def main():
                              for i, v in enumerate(data['fan_rpms'])), flush=True)
             if data.get('error'):
                 print('Error: ' + str(data['error']), flush=True)
-            else:
-                print('Mode: ' + str(data.get('control', {}).get('mode', 'unknown')), flush=True)
-                curve = data.get('control', {}).get('curve', [])
+            for key in ('control_error', 'recovery_error'):
+                if data.get(key):
+                    print(key.replace('_', ' ').capitalize() + ': ' + data[key], flush=True)
+            if not data.get('error'):
+                print('Mode: ' + str((data.get('control') or {}).get('mode', 'unknown')), flush=True)
+                print('Profile: ' + str((data.get('control') or {}).get('profile') or 'none'), flush=True)
+                curve = (data.get('control') or {}).get('curve', [])
                 if curve:
                     print('Curve: ' + ', '.join(f">={item['from_c']}°C: {item['duty']}/255"
                                                for item in curve), flush=True)
         if args.command != 'watch':
-            return 1 if data.get('error') else 0
+            return 1 if any(data.get(key) for key in ('error', 'control_error', 'recovery_error')) else 0
         time.sleep(3)
 
 

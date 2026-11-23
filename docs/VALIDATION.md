@@ -42,3 +42,28 @@ leave mode/PWM unchanged; test-max, cancellation, restore-auto, stop/restart,
 worker/supervisor crash recovery, suspend/resume, upgrade and removal. Verify
 both mode readback and the absence of competing EC programs. CI/mock tests do
 not replace these hardware checks. No hardware-qualified release is claimed.
+
+## 2026-11-23 candidate preparation
+
+* Integrated doctor with current main, retaining all profile commands.
+* `make check`: five C executables (protocol, control, maximum lifecycle,
+  worker command loop/lease cleanup, authorization helper) and 29 Python tests
+  passed. Service integration used a fake worker and a temporary UNIX socket;
+  the sandbox needed a local-socket exception. No real EC or maximum test.
+* Worker tests cover profile EOF/SIGTERM cleanup, failed cleanup retaining its
+  lease, startup recovery before polling and selector-only monitoring.
+* State tests cover persistent recovery errors after successful polling and
+  same-boot restart, previous-boot exclusion, startup lease recovery, active
+  operations, failed control with successful recovery, sensor/thermal refusal,
+  balanced curve and malformed public control data.
+* Desktop tests cover authorized/denied/cancelled/unavailable authorization,
+  missing service, invalid command rejection, zero/null RPM, visible recovery
+  errors, policy defaults and the helper's fixed isolated execution arguments.
+* Staged install under `/tmp/asus-fan-review-stage`, staged CLI help and
+  `systemd-analyze verify` passed; no service start or live installation.
+* Added named balanced curve and 95 °C firmware fallback. These are candidate
+  parameters, not hardware-qualified settings.
+
+Still outstanding: real desktop agent/GUI acceptance; clean-container package
+lifecycle for this updated candidate; all previously listed hardware gates.
+Public conversion, release upload and AUR push were not performed.

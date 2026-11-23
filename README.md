@@ -38,6 +38,7 @@ asus-zenbook-fan-driver status
 asus-zenbook-fan-driver status --json
 asus-zenbook-fan-driver watch --json
 sudo asus-zenbook-fan-driver quiet
+sudo asus-zenbook-fan-driver balanced
 sudo asus-zenbook-fan-driver performance
 sudo asus-zenbook-fan-driver restore-auto
 sudo asus-zenbook-fan-driver test-max
@@ -45,15 +46,18 @@ journalctl -u asus-zenbook-fan-driver.service
 ```
 
 `quiet` uses 80/100/120/140/153 duty from 0/50/60/70/80 °C and is capped at
-60%. `performance` uses 140/160/180/200/217 from 0/45/55/65/75 °C and is
-capped at 85%. Both profiles read the Ryzen
+60%. `balanced` uses 100/120/153/180/200 from 0/50/60/70/80 °C
+and is capped at about 78%. `performance` uses 140/160/180/200/217 from 0/45/55/65/75 °C and is
+capped at 85%. All profiles read the Ryzen
 `k10temp` CPU sensor and use only those fixed points; users cannot select
 arbitrary PWM values. A temperature rise increases cooling immediately. A
 temperature fall must clear a 3 °C hysteresis band; it then reduces one fixed
 curve point at most every 15 seconds, preventing rapid back-and-forth PWM
 writes around a threshold. `restore-auto` returns control to the firmware. The
 selected profile, CPU temperature, current duty and complete curve are shown in
-`control` in JSON status. A missing/invalid CPU sensor or failed curve update returns control
+`control` in JSON status. At 95 °C or above, named profiles are refused and
+active profile control returns to verified firmware cooling. These candidate
+curves and the threshold still require hardware acceptance. A missing/invalid CPU sensor or failed curve update returns control
 to the firmware automatically. Profile changes are root-only and create a
 recovery lease before manual mode; a failed change, service restart or
 `restore-auto` verifies a return to firmware automatic mode.
@@ -155,6 +159,11 @@ Existing Quickshell remains a client without modifications: temperatures stay
 in the bar; RPM stays in the resources popup. It already accepts the compatibility
 fields and rejects telemetry older than ten seconds. No Quickshell code is part
 of this driver repository.
+
+The standalone desktop client shows telemetry and authorizes profile changes
+through polkit. Install optional `tk`/`polkit` and a desktop authentication agent;
+launch **ASUS Zenbook fans** from the menu. See [desktop setup](docs/DESKTOP.md)
+and the [public status contract](docs/STATUS.md).
 
 ## Migration, upgrade and removal
 

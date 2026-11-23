@@ -11,3 +11,5 @@ jobs:
       - run: make check
       - run: make DESTDIR="$PWD/stage" install
       - run: test -x stage/usr/bin/asus-zenbook-fan-driver && test -f stage/usr/lib/systemd/system/asus-zenbook-fan-driver.service
+      - run: test -x stage/usr/lib/asus-zenbook-fan-driver/control-helper && test -f stage/usr/share/polkit-1/actions/org.asuszenbook.fan.control.policy && test -f stage/usr/share/applications/asus-zenbook-fan-driver.desktop
+      - run: systemd-analyze verify stage/usr/lib/systemd/system/asus-zenbook-fan-driver.service
