@@ -12,9 +12,11 @@ pkgbase = asus-zenbook-fan-driver
 	depends = glibc
 	depends = python
 	depends = systemd
+	optdepends = tk: standalone desktop interface
+	optdepends = polkit: desktop profile authorization (requires a session authentication agent)
 	source = asus-zenbook-fan-driver-0.1.0.tar.gz::https://github.com/1sSay/asus-zenbook-fan-driver/releases/download/v0.1.0/asus-zenbook-fan-driver-0.1.0.tar.gz
 	source = LICENSE
-	sha256sums = 34c9d015b4f648cea7cf7e80d9107580dc612b4cb010e1be1f3f215f9055f764
+	sha256sums = aa2db4a5eb8260dd74add0f3a3619d68e32a970cc933660aa6faf09ff20dda19
 	sha256sums = cafdac8a4310b4d2c4f910db9acca7ea8eb1c8eb4016b523035ed3ecf460a2a9
 
 pkgname = asus-zenbook-fan-driver

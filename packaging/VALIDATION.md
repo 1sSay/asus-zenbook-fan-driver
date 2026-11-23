@@ -38,3 +38,35 @@ release. AUR receives PKGBUILD, .SRCINFO and packaging LICENSE only, on master.
 Not done: downloading the source from a public release URL, AUR SSH access or
 push, a real systemd boot/install/upgrade, EC access and laptop sleep/resume.
 These must not be reported as container or hardware tests that passed.
+
+## Updated candidate — 2026-11-23
+
+The earlier checksum/build record above describes the historical candidate.
+The updated source commit is
+`dab243383f304e7598df4347965a78c8dee6f854`, archived with:
+
+```
+make DIST_REF=dab243383f304e7598df4347965a78c8dee6f854 dist
+```
+
+SHA256: `aa2db4a5eb8260dd74add0f3a3619d68e32a970cc933660aa6faf09ff20dda19`.
+Two archive runs compared byte-for-byte equal. Packaging is absent from the
+archive; both recipe checksums match this pinned source candidate. The old
+v0.1.0 preparation tag was not moved. Do not regenerate this archive from a
+later packaging-only commit; use the pinned source commit above.
+
+Local Arch `makepkg --cleanbuild --force --nodeps --noconfirm` passed with cached
+source, including checksum verification, compiler hardening/LTO, five C suites,
+29 Python tests, package/debug generation and staged installation. The local
+UNIX socket fixture required execution outside the restricted socket sandbox.
+`makepkg --printsrcinfo` matches checked-in metadata. Package contents include
+the 0755 helper (no setuid), isolated desktop client, polkit action, desktop entry
+and status/desktop documentation. Optional dependencies: tk and polkit; a desktop
+session authentication agent is also required for interactive authorization.
+
+This is a local build, not a fresh container or dependency-resolution test
+(`--nodeps` deliberately avoided installing anything on the host). No pacman
+install/remove, real graphical authentication, live service start, EC access,
+real maximum test, release upload or AUR push was performed. Repeat clean Arch
+container validation and live lifecycle/GUI acceptance for this candidate before
+publication. Hardware acceptance remains outstanding as described upstream.

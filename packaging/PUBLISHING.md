@@ -72,9 +72,24 @@ so archive checksums do not depend on packaging contents.
 Experimental 0.1.0: restricted userspace HealthyTable driver for the tested
 Zenbook UX425QA/UM425QA model and controller v8. Root service owns EC, clients
 read public telemetry. Includes bounded full-duty test, verified automatic
-recovery, Arch recipe and mock/process tests. Fan 1 / Fan 2 only. No DKMS,
-kernel module, arbitrary PWM, temperature curves or ASUS binaries.
+recovery, Arch recipe and mock/process tests. Fan 1 / Fan 2 only. Includes fixed candidate temperature curves, a read-only doctor, retained
+recovery diagnostics and a standalone polkit-authorized desktop client. No DKMS,
+kernel module, arbitrary PWM or ASUS binaries.
 
 Historical prototype readings were hardware-tested; the refactor's hardware
 lifecycle acceptance is pending. This limitation must remain in release notes
 unless replaced by a dated, real hardware validation record.
+
+## Candidate updates
+
+`make dist` archives the fixed version tag by default. For an updated candidate
+use `make DIST_REF=<reviewed-source-commit> dist` and regenerate the recipe and
+.SRCINFO checksums together. Packaging remains export-ignored. The 2026-11-16
+validation describes the older candidate only; repeat the clean Arch build and
+public-download verification for the final approved archive. Do not move the
+existing preparation tag or upload its archive as if it contained later fixes.
+
+The desktop client adds optional `tk` and `polkit`; verify its policy, helper
+(0755, no setuid/file capabilities), desktop entry and authentication agent in
+the installed package. Hardware, live upgrade/removal and graphical session
+acceptance remain explicit local steps.
