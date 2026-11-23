@@ -21,6 +21,7 @@ int supported_model(void);
 int verified_controller(void);
 int write_control(unsigned char reg, unsigned char value);
 int restore_auto(void);
+int set_profile(unsigned char duty);
 int delay_ms(long milliseconds);
 int run_max(void);
 #define SAMPLE_COUNT 8

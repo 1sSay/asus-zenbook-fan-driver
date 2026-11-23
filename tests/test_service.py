@@ -28,7 +28,7 @@ class ServiceProcess(unittest.TestCase):
                     f'm["Driver"].__init__.__globals__["RUNTIME"]=Path({directory!r}); '
                     # publish() default path is bound at definition time.
                     'g=m["Driver"].__init__.__globals__; original=g["publish"]; '
-                    f'g["publish"]=lambda values,error=None: original(values,error,Path({directory!r})/"status.json"); '
+                    f'g["publish"]=lambda values,error=None,control="auto",temperature=None,duty=None: original(values,error,control,temperature,duty,Path({directory!r})/"status.json"); '
                     'm["Driver"]().serve()')
             proc = subprocess.Popen([sys.executable, '-c', code], stderr=subprocess.PIPE)
             try:

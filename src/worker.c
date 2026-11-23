@@ -26,6 +26,19 @@ int delay_ms(long milliseconds) {
  while(nanosleep(&d,&d)) if(errno!=EINTR || interrupted) return -1;
  return interrupted ? -1 : 0;
 }
+static int curve_duty(const char *line) {
+ if(!strcmp(line,"set-80\n")) return 80;
+ if(!strcmp(line,"set-100\n")) return 100;
+ if(!strcmp(line,"set-120\n")) return 120;
+ if(!strcmp(line,"set-140\n")) return 140;
+ if(!strcmp(line,"set-153\n")) return 153;
+ if(!strcmp(line,"set-160\n")) return 160;
+ if(!strcmp(line,"set-180\n")) return 180;
+ if(!strcmp(line,"set-200\n")) return 200;
+ if(!strcmp(line,"set-217\n")) return 217;
+ if(!strcmp(line,"set-255\n")) return 255;
+ return -1;
+}
 int main(int argc, char **argv) {
  if(argc!=2 || strcmp(argv[1],"--service-worker")) return 2;
  if(!supported_model() || geteuid()!=0) { fputs("Unsupported model or missing root\n",stderr); return 1; }
@@ -60,6 +73,21 @@ int main(int argc, char **argv) {
    }
    else if(!strcmp(line,"auto\n")) {
      result=restore_auto(); auto_ok=result==0; if(auto_ok) unlink(LEASE);
+   }
+   else if(curve_duty(line) >= 0) {
+     unsigned char duty = (unsigned char)curve_duty(line);
+     int mode=read_register(0x31);
+     int lease=mode==0 ? open(LEASE,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600) : -1;
+     if(lease>=0) { close(lease); result=set_profile(duty); }
+     else if(mode==1 && access(LEASE,F_OK)==0) result=set_profile(duty);
+     if(result) {
+       auto_ok=restore_auto()==0;
+       if(auto_ok) unlink(LEASE);
+     }
+   }
+   else {
+     puts("{\"ok\":false,\"error\":\"invalid control command\"}");
+     continue;
    }
    printf("{\"ok\":%s,\"auto_restored\":%s}\n",result==0?"true":"false",auto_ok?"true":"false");
    interrupted=0;
