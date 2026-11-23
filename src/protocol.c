@@ -32,7 +32,7 @@ int select_fan(int index, int count) {
         fprintf(stderr, "ASUS EC unavailable or pending response before selection. Stopping.\n");
         return -1;
     }
-    /* The ONLY register write in this program: select the telemetry target. */
+    /* The only register write in the monitoring path: select the telemetry target. */
     const unsigned char payload[] = {0x82, 0x32, (unsigned char)index};
     if (send_byte(STATUS_PORT, 0xff) || send_byte(STATUS_PORT, 0xdd)) return -1;
     for (size_t i = 0; i < sizeof(payload); ++i)

@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-# asus-zenbook-fan-driver 0.1.0
+# asus-zenbook-fan-driver 0.1.1
 
 Experimental standalone Linux **userspace driver** for ASUS Zenbook
 UX425QA/UM425QA (Ryzen 7 5800H APU), x86_64, HealthyTable 8, exactly two fans.
@@ -198,8 +198,12 @@ indices, maximum duty and verified return to automatic mode. Observed peaks
 were 7700 RPM (Fan 1) and 8694 RPM (Fan 2), **measurements of that unit, not rated
 limits**. No hardware access is performed by this refactor's build/tests. The new
 service, process lifecycle, installation and suspend/resume must be validated on
-the laptop before calling 0.1.0 hardware-qualified.
+the laptop before calling 0.1.1 hardware-qualified.
 
-GPL-3.0-or-later; provenance and reference notices: `docs/PROVENANCE.md`.
+## License
+
+Copyright (C) 2026 1sSay. Released under **GPL-3.0-or-later**, a strong copyleft
+license; see the complete [license](LICENSE) and [licensing guide](LICENSES.md).
+Preserved third-party notices and provenance: [docs/PROVENANCE.md](docs/PROVENANCE.md).
 Packaging files are separately 0BSD. Public release and AUR publication require
 owner approval; staging in a private repository is not AUR publication.

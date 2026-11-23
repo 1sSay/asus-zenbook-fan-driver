@@ -5,8 +5,10 @@ The GitHub repository is deliberately private. Do not publish the desktop-config
 repository or its history. The standalone repository contains only reviewed
 utility files, tests, documentation, CI and packaging.
 
-1. Finish hardware acceptance listed in README and docs/VALIDATION.md. Resolve
-   any recovery failures before claiming a hardware-qualified release.
+1. Review [the current publication audit](AUDIT.md) and keep deferred hardware,
+   desktop and package-lifecycle acceptance explicit in an experimental release.
+   Finish hardware acceptance listed in README and docs/VALIDATION.md before
+   claiming a hardware-qualified release. Resolve any known recovery failures.
 2. Obtain explicit owner approval to make the standalone repository public,
    create the GitHub release, and push AUR. The preparation tag alone does not
    publish a release. If changes are needed before publication, regenerate the
@@ -15,8 +17,8 @@ utility files, tests, documentation, CI and packaging.
    AUR RPC and Arch package searches returned zero matches. No command with this
    name was installed on the preparation host. GitHub repository name is now
    reserved by the private repository.
-4. Upload the exact locally tested `dist/asus-zenbook-fan-driver-0.1.0.tar.gz`
-   to release `v0.1.0`. Do not substitute GitHub's automatic source archive: the
+4. Upload the exact locally tested `<bundle>/asus-zenbook-fan-driver-0.1.1.tar.gz`
+   to release `v0.1.1`. Do not substitute GitHub's automatic source archive: the
    prepared archive has its own reproducible byte layout and sha256. Once public,
    test PKGBUILD again from an empty source cache to verify the release URL.
 5. An AUR account with the owner's **public** SSH key registered is required.
@@ -69,7 +71,7 @@ old tagged archive as if it contained current changes.
 
 ## Prepared release description
 
-Experimental 0.1.0: restricted userspace HealthyTable driver for the tested
+Experimental 0.1.1: restricted userspace HealthyTable driver for the tested
 Zenbook UX425QA/UM425QA model and controller v8. Root service owns EC, clients
 read public telemetry. Includes bounded full-duty test, verified automatic
 recovery, Arch recipe and mock/process tests. Fan 1 / Fan 2 only. Includes fixed candidate temperature curves, a read-only doctor, retained

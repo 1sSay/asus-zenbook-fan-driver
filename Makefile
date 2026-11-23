@@ -2,7 +2,7 @@
 PREFIX ?= /usr
 DESTDIR ?=
 CC ?= cc
-VERSION ?= 0.1.0
+VERSION ?= 0.1.1
 DIST_REF ?= v$(VERSION)
 CFLAGS ?= -O2 -g
 WARN = -std=c11 -Wall -Wextra -Werror
@@ -42,6 +42,7 @@ install: all
 	install -Dm644 systemd/asus-zenbook-fan-driver.service $(DESTDIR)$(PREFIX)/lib/systemd/system/asus-zenbook-fan-driver.service
 	install -Dm755 systemd/asus-zenbook-fan-driver-sleep $(DESTDIR)$(PREFIX)/lib/systemd/system-sleep/asus-zenbook-fan-driver
 	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/asus-zenbook-fan-driver/LICENSE
+	install -Dm644 LICENSES.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/LICENSES.md
 	install -Dm644 docs/LICENSE.MIT-reference $(DESTDIR)$(PREFIX)/share/licenses/asus-zenbook-fan-driver/LICENSE.MIT-reference
 	install -Dm644 CHANGELOG.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/CHANGELOG.md
 	install -Dm644 docs/ROADMAP.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/ROADMAP.md

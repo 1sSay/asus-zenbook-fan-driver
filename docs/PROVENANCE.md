@@ -48,6 +48,7 @@ Version is `BB 50`; table reads `DD 02 <reg> 00`, writes `DD 82 <reg> <value>`.
 Registers: fan count `30`, global manual mode `31`, selector `32`, RPM low/high
 `33/34`, duty `35`. Supported version is exactly 8 and count exactly 2.
 Monitoring writes only selector 0 or 1, leaving 1 selected after a full sample.
-The mode affects both fans. Only mode 0/1 and full duty 255 are exposed internally;
-there is no generic write API or bypass. Automatic mode is write 0 to register
-31 followed by readback 0, never PWM 0.
+The mode affects both fans. Control exposes only mode 0/1, the fixed profile
+duties and bounded full duty 255; there is no generic write API or bypass.
+Automatic mode is write 0 to register 31 followed by readback 0, never PWM 0.
+See [../LICENSES.md](../LICENSES.md) for the license grant and file scopes.

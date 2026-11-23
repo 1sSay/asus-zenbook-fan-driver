@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2026 1sSay */
 #include <sys/io.h>
 #include <time.h>
 unsigned char fake_inb(unsigned short port);

@@ -12,7 +12,7 @@ import socket
 import subprocess
 import time
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 STATUS = Path('/run/asus-fan-rpm/status.json')
 
 

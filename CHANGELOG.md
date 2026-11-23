@@ -1,7 +1,16 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Release notes
 
-## 0.1.0 — unreleased experimental candidate
+## 0.1.1 — experimental release candidate
+
+* Clarify GPL-3.0-or-later licensing, retained third-party notices and the
+  separate 0BSD packaging license; install the licensing guide.
+* Refresh the release source and AUR recipe without moving the historical
+  v0.1.0 preparation tag.
+* Hardware, graphical-session and live package-lifecycle acceptance remain
+  deferred. The functionality and limitations below also apply to 0.1.1.
+
+## 0.1.0 — historical preparation candidate (not published)
 
 Standalone Linux userspace fan driver for the exact supported Zenbook
 UX425QA/UM425QA DMI names, HealthyTable 8 and two fans. The owner reports a

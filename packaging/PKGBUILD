@@ -2,7 +2,7 @@
 # Copyright (C) 2026 1sSay
 # Maintainer: 1sSay
 pkgname=asus-zenbook-fan-driver
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc='Userspace HealthyTable fan driver for ASUS Zenbook UX425QA/UM425QA only'
 arch=('x86_64')
