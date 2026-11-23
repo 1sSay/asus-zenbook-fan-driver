@@ -62,3 +62,15 @@ class Telemetry(unittest.TestCase):
         self.assertEqual(service.curve_status('quiet')[-1], {'from_c': 80, 'duty': 153})
         with self.assertRaises(ValueError):
             service.curve_duty('quiet', 0)
+
+    def test_curve_hysteresis_and_slow_ramp_down(self):
+        changed = 100
+        # Rising temperature asks for more cooling without delay.
+        self.assertEqual(service.next_duty('quiet', 71, 120, changed, 101), 140)
+        # Dropping just below a threshold cannot make the fan hunt.
+        self.assertEqual(service.next_duty('quiet', 69, 140, changed, 200), 140)
+        # A cooler CPU still waits for the minimum dwell time.
+        self.assertEqual(service.next_duty('quiet', 66, 140, changed, 114), 140)
+        # After the dwell time, descend only one named curve point.
+        self.assertEqual(service.next_duty('quiet', 40, 153, changed, 115), 140)
+        self.assertEqual(service.next_duty('quiet', 40, 140, 115, 130), 120)

@@ -31,6 +31,8 @@ CURVES = {
     'quiet': ((0, 80), (50, 100), (60, 120), (70, 140), (80, 153)),
     'performance': ((0, 140), (45, 160), (55, 180), (65, 200), (75, 217)),
 }
+HYSTERESIS_C = 3
+MINIMUM_DUTY_CHANGE_SECONDS = 15
 
 
 def cpu_temperature():
@@ -55,6 +57,27 @@ def curve_duty(profile, temperature):
             break
         duty = candidate
     return duty
+
+
+def next_duty(profile, temperature, current_duty, changed_at, now):
+    """Return the next safe curve point without chattering around a threshold."""
+    target = curve_duty(profile, temperature)
+    points = CURVES[profile]
+    duties = [duty for _, duty in points]
+    if current_duty not in duties:
+        return target
+    current = duties.index(current_duty)
+    target_index = duties.index(target)
+    if target_index >= current:
+        # Do not delay extra cooling when the CPU heats up.
+        return target
+    threshold = points[current][0]
+    if (now - changed_at >= MINIMUM_DUTY_CHANGE_SECONDS and
+            temperature < threshold - HYSTERESIS_C):
+        # Decay one fixed curve point at a time, never directly from a hot
+        # point to idle. This keeps fan speed changes gradual.
+        return duties[current - 1]
+    return current_duty
 
 
 def curve_status(profile):
@@ -86,6 +109,7 @@ class Driver:
         self.slots = threading.BoundedSemaphore(8)
         self.profile = 'auto'
         self.duty = None
+        self.duty_changed_at = None
         self.worker = subprocess.Popen([WORKER, '--service-worker'], stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE, bufsize=0)
 
@@ -127,6 +151,7 @@ class Driver:
                         result = self.rpc(f'set-{duty}')
                         if result.get('ok'):
                             self.profile, self.duty = command, duty
+                            self.duty_changed_at = time.monotonic()
                     else:
                         result = self.rpc(command)
                         if result.get('ok'):
@@ -150,12 +175,15 @@ class Driver:
         temperature = None
         if self.profile in CURVES:
             temperature = cpu_temperature()
-            duty = curve_duty(self.profile, temperature)
+            now = time.monotonic()
+            duty = next_duty(self.profile, temperature, self.duty,
+                             self.duty_changed_at or now, now)
             if duty != self.duty:
                 result = self.rpc(f'set-{duty}')
                 if not result.get('ok'):
                     raise RuntimeError('Curve update failed')
                 self.duty = duty
+                self.duty_changed_at = now
         return validate(self.rpc('poll')), temperature
 
     def serve(self):

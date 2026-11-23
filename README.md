@@ -46,7 +46,10 @@ journalctl -u asus-zenbook-fan-driver.service
 60%. `performance` uses 140/160/180/200/217 from 0/45/55/65/75 °C and is
 capped at 85%. Both profiles read the Ryzen
 `k10temp` CPU sensor and use only those fixed points; users cannot select
-arbitrary PWM values. `restore-auto` returns control to the firmware. The
+arbitrary PWM values. A temperature rise increases cooling immediately. A
+temperature fall must clear a 3 °C hysteresis band; it then reduces one fixed
+curve point at most every 15 seconds, preventing rapid back-and-forth PWM
+writes around a threshold. `restore-auto` returns control to the firmware. The
 selected profile, CPU temperature, current duty and complete curve are shown in
 `control` in JSON status. A missing/invalid CPU sensor or failed curve update returns control
 to the firmware automatically. Profile changes are root-only and create a
