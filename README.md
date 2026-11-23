@@ -30,6 +30,8 @@ run a legacy installer, modify the live system or enable services.
 After installing the package (explicit administrator actions):
 
 ```
+asus-zenbook-fan-driver doctor
+asus-zenbook-fan-driver doctor --json
 sudo systemctl daemon-reload
 sudo systemctl enable --now asus-zenbook-fan-driver.service
 asus-zenbook-fan-driver status
@@ -63,6 +65,51 @@ arbitrary PWM, fan-off or a temperature curve. Disconnecting the client does not
 extend the test. An explicit restore request interrupts a running maximum test,
 then serializes restoration after it. Control results are JSON; samples are
 logged to the journal. A failed test returns nonzero even if recovery succeeded.
+
+## Read-only diagnostics (`doctor`)
+
+Run `asus-zenbook-fan-driver doctor` as an ordinary user before hardware
+acceptance or when troubleshooting an installed package. Use `doctor --json`
+for scripts; `--help` lists all commands and diagnostic exit codes. It never
+starts/enables the service, opens the control socket, invokes the worker,
+accesses raw EC or changes mode/PWM. No root or hardware test is required.
+Before service activation it is normal to report an inactive service and
+missing telemetry; installing the files alone cannot produce a healthy report.
+
+Checks include x86_64 architecture, the exact DMI allowlist above, installed
+CLI/worker/service/unit/sleep hook files and their required read/execute access,
+systemd unit load/active/substate/result, and public telemetry. Missing or
+unreadable DMI is **unknown**, distinct from an unsupported model. The systemd
+query has a five-second timeout; a missing manager, missing `systemctl`, denied
+query or incomplete response is explicitly inconclusive. An inactive, failed,
+starting or missing unit is a problem even when telemetry is still fresh.
+
+Telemetry must be a valid JSON object with two integer/null readings, finite
+numeric wall/monotonic timestamps no more than ten seconds old and not in the
+future, and the current boot ID. Zero RPM is valid; null readings are a problem.
+Missing, malformed and stale telemetry are reported separately from access
+failures. Valid fresh public `error`, `control_error` and `recovery_error`
+fields are shown when present. The current service publishes only `error`;
+absent separate control/recovery fields appear as **Not published**, and do not
+establish successful recovery or the absence of past failures. `doctor` does
+not inspect root-only lease files or reconstruct control history.
+
+Diagnostic exit codes (a detected problem takes precedence over unknown checks):
+
+| Code | Meaning |
+| --- | --- |
+| 0 | All required checks passed at the time of inspection. |
+| 1 | At least one problem was detected. |
+| 2 | No detected problem, but a required check is inconclusive. Also used by argparse for invalid arguments. |
+
+JSON output uses `schema_version: 1`, `exit_code`, `checks` (objects containing
+`name`, `state`, `detail`) and `limits`. States are `ok`, `problem`, `unknown`
+and informational `info`; details may be strings or structured objects.
+A successful report is an installation/telemetry snapshot, not hardware
+acceptance: DMI does not verify HealthyTable 8 or the physical fan count.
+The command cannot detect all competing EC software and does not attempt a
+process scan or acquire the worker lock. That lock coordinates only this
+project and the old prototype; firmware and unrelated tools remain outside it.
 
 ## Recovery and lifecycle
 
