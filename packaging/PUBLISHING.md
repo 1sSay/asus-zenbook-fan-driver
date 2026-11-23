@@ -63,9 +63,9 @@ inconclusive without a detected problem (invalid arguments also use 2).
 See README for the JSON schema and safety/visibility limits. A DMI match or
 successful report does not replace hardware acceptance or prove EC exclusivity.
 
-These changes do not refresh the prepared v0.1.0 tag/archive/checksums. Follow
-step 2 before publishing an updated candidate; packaging remains export-ignored
-so archive checksums do not depend on packaging contents.
+The v0.1.0 preparation tag is historical. Use the pinned source commit from the
+latest candidate record or prepare a new local bundle below. Do not upload the
+old tagged archive as if it contained current changes.
 
 ## Prepared release description
 
@@ -93,3 +93,32 @@ The desktop client adds optional `tk` and `polkit`; verify its policy, helper
 (0755, no setuid/file capabilities), desktop entry and authentication agent in
 the installed package. Hardware, live upgrade/removal and graphical session
 acceptance remain explicit local steps.
+
+## One-command local bundle
+
+From an Arch development checkout with Git, Python, gzip and makepkg installed:
+
+```
+python3 packaging/prepare.py --ref HEAD
+```
+
+Commit source changes first. The command resolves HEAD to a full immutable
+commit and creates a new `dist/candidate-<commit>/` directory. It includes the
+exact reproducible source archive, SHA256SUMS, candidate.json with source commit,
+RELEASE-NOTES.md, and an `aur/` directory with PKGBUILD/.SRCINFO/LICENSE. The
+recipe checksum and generated metadata refer to the archive in that bundle.
+The current locally reviewed packaging recipe is used; review it with the
+chosen source version. Existing output directories are never overwritten.
+
+This command does not build/test/install the package, access hardware, create
+or move tags, change repository visibility, upload a release or push to AUR.
+It prepares reviewable files. To publish later, use that exact bundle and obtain
+owner approval for the selected external actions. Source changes after bundle
+creation require a new bundle; packaging-only edits do not alter its archive.
+
+## Deferred acceptance
+
+On 2026-11-23 the owner reported normal operation on a UM425Q and deferred
+further testing. Continue preparation with the experimental qualification and
+limitations from CHANGELOG.md; do not mark hardware/GUI/package acceptance as
+passed. No new tests on the laptop, active service or desktop are authorized.

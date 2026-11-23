@@ -70,3 +70,18 @@ install/remove, real graphical authentication, live service start, EC access,
 real maximum test, release upload or AUR push was performed. Repeat clean Arch
 container validation and live lifecycle/GUI acceptance for this candidate before
 publication. Hardware acceptance remains outstanding as described upstream.
+
+## Final preparation bundle — 2026-11-23
+
+Source commit: `153aecc659d5e4b321059e79be252acf4790c4fb`.
+SHA256: `5b8ad8817a4ad88a1532953ae8c065950a895487b5bcf058c40bbd916a6a2496`.
+
+Prepared with `python3 packaging/prepare.py --ref 153aecc659d5e4b321059e79be252acf4790c4fb`.
+The bundle source archive matches `make DIST_REF=153aecc659d5e4b321059e79be252acf4790c4fb dist`
+byte-for-byte. PKGBUILD and makepkg-generated .SRCINFO were copied from its
+local aur directory. SHA256SUMS and candidate.json identify the exact source.
+The earlier candidate's build record remains historical; no new live package,
+GUI or hardware acceptance was performed, in accordance with the owner's
+request to defer testing. Automated make check and staged install are recorded
+in docs/VALIDATION.md. Existing v0.1.0 tag remains unchanged; publication is
+still a separately approved action.

@@ -12,7 +12,7 @@ depends=('glibc' 'python' 'systemd')
 makedepends=('gcc' 'make')
 optdepends=('tk: standalone desktop interface' 'polkit: desktop profile authorization (requires a session authentication agent)')
 source=("$pkgname-$pkgver.tar.gz::$url/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz" 'LICENSE')
-sha256sums=('aa2db4a5eb8260dd74add0f3a3619d68e32a970cc933660aa6faf09ff20dda19' 'cafdac8a4310b4d2c4f910db9acca7ea8eb1c8eb4016b523035ed3ecf460a2a9')
+sha256sums=('5b8ad8817a4ad88a1532953ae8c065950a895487b5bcf058c40bbd916a6a2496' 'cafdac8a4310b4d2c4f910db9acca7ea8eb1c8eb4016b523035ed3ecf460a2a9')
 
 build() {
   make -C "$pkgname-$pkgver"
