@@ -1,9 +1,12 @@
 <!-- SPDX-License-Identifier: 0BSD -->
-# Publication checklist (not executed)
+# Publication procedure
 
-The GitHub repository is deliberately private. Do not publish the desktop-config
-repository or its history. The standalone repository contains only reviewed
-utility files, tests, documentation, CI and packaging.
+The standalone GitHub repository became public on 2026-11-23 with explicit owner
+approval. Experimental [v0.1.1](https://github.com/1sSay/asus-zenbook-fan-driver/releases/tag/v0.1.1)
+is published. AUR submission awaits owner account registration and public-key
+setup. Do not publish the desktop-config repository or its history. The
+standalone repository contains reviewed utility files, tests, documentation,
+CI and packaging. The following procedure also applies to future releases.
 
 1. Review [the current publication audit](AUDIT.md) and keep deferred hardware,
    desktop and package-lifecycle acceptance explicit in an experimental release.
@@ -16,7 +19,7 @@ utility files, tests, documentation, CI and packaging.
 3. Verify the package name is still free in AUR/Arch; the 2026-11-16 GitHub,
    AUR RPC and Arch package searches returned zero matches. No command with this
    name was installed on the preparation host. GitHub repository name is now
-   reserved by the private repository.
+   reserved by the standalone repository.
 4. Upload the exact locally tested `<bundle>/asus-zenbook-fan-driver-0.1.1.tar.gz`
    to release `v0.1.1`. Do not substitute GitHub's automatic source archive: the
    prepared archive has its own reproducible byte layout and sha256. Once public,
@@ -24,15 +27,16 @@ utility files, tests, documentation, CI and packaging.
 5. An AUR account with the owner's **public** SSH key registered is required.
    No password or private key should be pasted into chat. Confirm SSH access
    locally with `ssh -T aur@aur.archlinux.org` after verifying the host key using
-   official AUR documentation. Access has not been assumed or configured here.
+   official AUR documentation. A dedicated local key was generated for the first
+   submission; only its public half belongs in the owner's AUR profile.
 6. Clone `ssh://aur@aur.archlinux.org/asus-zenbook-fan-driver.git`. Its branch
    must be `master`. Copy only `PKGBUILD`, `.SRCINFO`, and the 0BSD `LICENSE`
    from this directory. Regenerate `.SRCINFO` using `makepkg --printsrcinfo` and
    review its diff, then commit and push **after approval**. Do not upload the
    source archive, built package, application Git history or private files.
 
-For a new local staging checkout use `git init -b master`. A prepared local
-AUR checkout is in `dist/aur/` (not part of upstream source or Git history).
+For a new local staging checkout use `git init -b master`. The prepared 0.1.1
+AUR checkout is in `dist/aur-0.1.1/` (not part of upstream source or Git history).
 
 ## Checking an installation with doctor
 

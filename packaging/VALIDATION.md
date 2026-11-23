@@ -128,3 +128,32 @@ only expected project paths/text blobs; common private-key/token patterns found
 no matches. AUR SSH host key matches the official HTTPS-published Ed25519
 fingerprint. Existing SSH authentication was rejected with publickey; owner
 account/key setup is still needed before an AUR push.
+
+## Public release and cold-download build — 2026-11-23
+
+The owner explicitly approved public conversion, the exact v0.1.1 source
+upload, and AUR submission after access setup. The standalone repository is
+now public and the experimental prerelease is available at:
+https://github.com/1sSay/asus-zenbook-fan-driver/releases/tag/v0.1.1
+
+The release contains only the tested source archive and SHA256SUMS. Anonymous
+HTTP download returned 200 and SHA256
+`b0992c43001a001699f4f70d925b8d03e7ec29a14faafc00795675091e02a3eb`.
+The source commit remains `77dfbfc344d86fd7f5ad82facabea3b1204be589`;
+the historical v0.1.0 tag was not changed.
+
+A second fresh Arch container mounted only the three AUR files, not the local
+source archive. Unprivileged makepkg downloaded the public source with an empty
+cache, verified both SHA256 entries, built, ran all five simulated C suites and
+29 Python tests, and packaged successfully with full dependency checking.
+Generated .SRCINFO matches. Extracted CLI help/version, license notices, helper
+0755 permissions, desktop/polkit files and static systemd unit verification all
+passed. namcap findings are unchanged from the first 0.1.1 build above.
+Logs and artifacts: `dist/aur-0.1.1-public-validation/`.
+
+No hardware, graphical-session, live installation/service or laptop lifecycle
+acceptance was performed. The owner has not yet registered an AUR account.
+A dedicated local SSH pair was created; only its public half was provided to
+the owner. The prepared `dist/aur-0.1.1/` master checkout contains exactly
+PKGBUILD, .SRCINFO and the 0BSD LICENSE. AUR authentication/push awaits the
+owner's registration and key addition; no AUR package is claimed published.

@@ -1,9 +1,10 @@
 <!-- SPDX-License-Identifier: 0BSD -->
 # AUR readiness audit — 2026-11-23
 
-Status: experimental 0.1.1 bundle and clean Arch validation are ready; publication
-still has outstanding steps. See the latest entry in VALIDATION.md.
-No publication, live installation, service activation or hardware test was done.
+Status: the standalone repository is public and experimental 0.1.1 is published
+with explicit owner approval. The source downloads anonymously with the expected
+SHA256. AUR submission awaits owner registration/key setup. See VALIDATION.md.
+No live installation, service activation or hardware test was done.
 
 ## Licensing
 
@@ -32,15 +33,15 @@ References:
 
 * AUR RPC exact-name lookup: resultcount 0; Arch package exact-name lookup:
   count 0. Name availability must be rechecked immediately before submission.
-* Anonymous GitHub repository and release-asset requests both returned HTTP 404.
-  This proves no public source download at the configured URL; it does not
-  distinguish a private repository from a nonexistent one.
+* Before publication, anonymous GitHub repository and release-asset requests
+  returned HTTP 404. After owner approval and publication, both are accessible;
+  the source asset downloads with HTTP 200 and the expected SHA256.
 * PKGBUILD uses an x86_64 source build, SPDX licenses, declared runtime and
   optional desktop dependencies, build/check/package functions and DESTDIR.
   It does not enable/start the service or install to the live root.
 * `makepkg --printsrcinfo` exactly matches packaging/.SRCINFO. Both SHA256
-  entries match their inputs: the pinned source commit
-  `153aecc659d5e4b321059e79be252acf4790c4fb` and packaging/LICENSE.
+  entries match their inputs: the published source commit
+  `77dfbfc344d86fd7f5ad82facabea3b1204be589` and packaging/LICENSE.
   The archive omits packaging and .gitattributes via export-ignore.
 * Tracked paths contain standalone sources, tests, integration and documentation;
   no ASUS binaries, DLLs, Windows drivers, firmware or desktop configuration
@@ -63,15 +64,17 @@ References:
    See VALIDATION.md for the exact archive hash and namcap findings.
 2. Live package lifecycle/GUI/hardware acceptance remains deferred; it must not
    be claimed from the clean-container build.
-3. Obtain owner approval for public conversion, release upload and AUR push.
-   Publish the exact tested source asset, then build with an empty source cache
-   to verify the public URL and checksum. Keep experimental/deferred acceptance
-   limitations in release notes; AUR publication does not prove hardware safety.
+3. Completed: explicit owner approval for public conversion, release upload and
+   AUR push; public repository and experimental v0.1.1 with the exact source asset
+   and SHA256SUMS. Final empty-cache Arch validation uses the public download URL.
+   Experimental/deferred acceptance limitations remain in the release notes.
 4. Verify the owner's AUR account/public SSH key and access, recheck name
    availability, regenerate .SRCINFO with makepkg, and review the AUR diff.
    On branch master, submit only PKGBUILD, .SRCINFO and the packaging LICENSE.
    No application Git history, source archive or built package belongs in AUR.
 
 The follow-up preparation completed clean-container/namcap checks and attempted
-AUR authentication (rejected publickey); no AUR push has been done. See PUBLISHING.md for the publication procedure and
-VALIDATION.md for historical candidate records.
+AUR authentication (rejected publickey). The owner has no AUR account yet; a
+dedicated key pair was generated locally and the public half provided for
+registration. No private key was read, committed or uploaded. No AUR push has
+been done. See PUBLISHING.md and VALIDATION.md.
