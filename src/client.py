@@ -12,6 +12,7 @@ import socket
 import subprocess
 import time
 
+VERSION = '0.1.0'
 STATUS = Path('/run/asus-fan-rpm/status.json')
 
 
@@ -63,7 +64,7 @@ def read_telemetry(path=STATUS, now=None, monotonic=None,
 def status(path=STATUS, now=None, monotonic=None):
     try:
         return read_telemetry(path, now, monotonic)
-    except (OSError, ValueError, TypeError) as exc:
+    except (OSError, ValueError, TypeError, OverflowError) as exc:
         return {'fan_rpms': [None, None], 'error': str(exc)}
 
 
@@ -154,7 +155,7 @@ def doctor(root=Path('/'), machine=None, run=None, now=None, monotonic=None):
         add('telemetry', 'problem', 'Required telemetry/boot file missing: ' + str(exc))
     except TelemetryError as exc:
         add('telemetry', 'problem', exc.kind + ': ' + str(exc))
-    except (ValueError, UnicodeError) as exc:
+    except (ValueError, UnicodeError, OverflowError) as exc:
         add('telemetry', 'problem', 'invalid: ' + str(exc))
     except OSError as exc:
         add('telemetry', 'unknown', 'Telemetry inaccessible: ' + str(exc))
@@ -164,11 +165,32 @@ def doctor(root=Path('/'), machine=None, run=None, now=None, monotonic=None):
             'limits': list(DOCTOR_LIMITS)}
 
 
+def control_request(command, path='/run/asus-fan-rpm/control.sock'):
+    """Return a structured failure even when the service/socket is unavailable."""
+    commands = {'test-max': 'max', 'restore-auto': 'auto',
+                'quiet': 'quiet', 'balanced': 'balanced', 'performance': 'performance'}
+    if command not in commands:
+        return {'ok': False, 'error': 'Invalid control command'}
+    try:
+        with socket.socket(socket.AF_UNIX) as connection:
+            connection.settimeout(40)
+            connection.connect(str(path))
+            connection.sendall((commands[command] + '\n').encode())
+            with connection.makefile('r') as stream:
+                result = json.loads(stream.readline(8192))
+        if not isinstance(result, dict) or type(result.get('ok')) is not bool:
+            raise ValueError('Invalid service response')
+        return result
+    except (OSError, ValueError) as exc:
+        return {'ok': False, 'error': str(exc)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog=(
         'doctor: read-only installation, model, service and telemetry diagnostics; no root needed. '
         'Exit codes: 0 checks passed, 1 problem found, 2 inconclusive (also argument errors). '
         'A detected problem takes precedence over inconclusive checks.'))
+    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('command', choices=['status', 'watch', 'doctor', 'quiet', 'balanced', 'performance', 'test-max', 'restore-auto'])
     parser.add_argument('--json', action='store_true', help='print machine-readable JSON')
     args = parser.parse_args()
@@ -184,13 +206,7 @@ def main():
                 print('Note: ' + limit)
         return report['exit_code']
     if args.command in ('quiet', 'balanced', 'performance', 'test-max', 'restore-auto'):
-        with socket.socket(socket.AF_UNIX) as connection:
-            connection.settimeout(40)
-            connection.connect('/run/asus-fan-rpm/control.sock')
-            command = {'test-max': 'max', 'restore-auto': 'auto'}.get(args.command, args.command)
-            connection.sendall((command + '\n').encode())
-            response = connection.makefile('r').readline(8192)
-            result = json.loads(response)
+        result = control_request(args.command)
         print(json.dumps(result))
         return 0 if result.get('ok') else 1
     while True:

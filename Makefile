@@ -43,6 +43,8 @@ install: all
 	install -Dm755 systemd/asus-zenbook-fan-driver-sleep $(DESTDIR)$(PREFIX)/lib/systemd/system-sleep/asus-zenbook-fan-driver
 	install -Dm644 LICENSE $(DESTDIR)$(PREFIX)/share/licenses/asus-zenbook-fan-driver/LICENSE
 	install -Dm644 docs/LICENSE.MIT-reference $(DESTDIR)$(PREFIX)/share/licenses/asus-zenbook-fan-driver/LICENSE.MIT-reference
+	install -Dm644 CHANGELOG.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/CHANGELOG.md
+	install -Dm644 docs/ROADMAP.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/ROADMAP.md
 	install -Dm644 README.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/README.md
 	install -Dm644 docs/STATUS.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/STATUS.md
 	install -Dm644 docs/DESKTOP.md $(DESTDIR)$(PREFIX)/share/doc/asus-zenbook-fan-driver/DESKTOP.md

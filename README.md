@@ -12,6 +12,11 @@ with the old prototype. Clients do not use raw I/O. Ordinary monitoring changes
 only the telemetry fan selector, never PWM or cooling mode. Fan 1 and Fan 2
 cool the shared APU; indices have no established CPU/GPU or left/right mapping.
 
+The owner identifies the laptop as **UM425Q** and reports normal operation.
+Further hardware acceptance is currently deferred; the exact DMI/controller
+allowlist above remains unchanged. See [remaining work](docs/ROADMAP.md) and
+[release notes](CHANGELOG.md).
+
 ## Build and use
 
 Requires Linux x86_64, a C11 compiler, make, Python 3. On Arch install

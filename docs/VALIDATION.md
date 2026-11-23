@@ -67,3 +67,22 @@ not replace these hardware checks. No hardware-qualified release is claimed.
 Still outstanding: real desktop agent/GUI acceptance; clean-container package
 lifecycle for this updated candidate; all previously listed hardware gates.
 Public conversion, release upload and AUR push were not performed.
+
+## Owner report and deferred acceptance — 2026-11-23
+
+The owner reports the model as UM425Q and normal operation, and requests that
+further testing be deferred while the remaining software/release preparation
+is completed. No new DMI, EC readback, maximum, sleep/resume, graphical-session
+or package-lifecycle test is inferred from that statement. No model override
+or allowlist change was made. See docs/ROADMAP.md for issue coverage.
+
+## Final software preparation — 2026-11-23
+
+Added release notes, issue coverage/deferred-acceptance record, contribution and
+bug-report instructions, and local candidate/AUR bundle preparation. CLI exposes
+its version and returns structured control errors when the service is missing;
+the GUI explains its optional Tk dependency. `make check` (five C suites and 29
+Python tests) and staged install under `/tmp/asus-fan-final-stage` passed; staged
+`--version` reports 0.1.0. These are simulated/software checks required by the
+repository, not the deferred laptop/desktop/package-lifecycle tests. No live
+service or hardware command was executed.

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Bug report
+description: Report a driver, client or packaging problem
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Package/commit version, distribution and laptop model. Do not attach serial numbers or private configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include steps already performed. Do not run a maximum test or change cooling settings just to submit this report.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Existing diagnostics
+      description: Optional doctor --json, status --json and relevant journal excerpts. Review/redact identifying data. Never attach firmware or EC/memory dumps.
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Recovery state
+      description: If a control operation failed, was automatic cooling confirmed? Report known results only; do not perform additional hardware tests for this field.

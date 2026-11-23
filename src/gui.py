@@ -50,8 +50,11 @@ def describe(data):
 def main():
     if os.geteuid() == 0:
         raise SystemExit('Run the desktop client as your ordinary desktop user')
-    import tkinter as tk
-    from tkinter import ttk
+    try:
+        import tkinter as tk
+        from tkinter import ttk
+    except ImportError:
+        raise SystemExit('The desktop client requires Tk; on Arch install the optional tk package')
     status = runpy.run_path(CLIENT)['status']
     root = tk.Tk()
     root.title('ASUS Zenbook fans')
