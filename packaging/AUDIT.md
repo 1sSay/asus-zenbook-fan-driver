@@ -1,7 +1,8 @@
 <!-- SPDX-License-Identifier: 0BSD -->
 # AUR readiness audit — 2026-11-23
 
-Status: local preparation is usable; publication still has outstanding steps.
+Status: experimental 0.1.1 bundle and clean Arch validation are ready; publication
+still has outstanding steps. See the latest entry in VALIDATION.md.
 No publication, live installation, service activation or hardware test was done.
 
 ## Licensing
@@ -57,16 +58,11 @@ References:
 
 ## Still required
 
-1. Commit/review the current source changes and prepare a **new** pinned bundle:
-   `python3 packaging/prepare.py --ref <reviewed-commit>`. Copy its PKGBUILD and
-   .SRCINFO back to packaging together. The currently checked-in sums correctly
-   identify the historical candidate, not these new licensing edits. Do not
-   reuse the old preparation tag/archive as the updated release.
-2. Build the final exact bundle in a clean Arch environment with dependency
-   resolution, run namcap, inspect the package and record results. Historical
-   clean-container results do not validate today's final candidate. Further
-   live package lifecycle/GUI/hardware testing remains deferred by the owner;
-   no such acceptance is claimed. Do not run it without authorization.
+1. Completed: source commit `77dfbfc344d86fd7f5ad82facabea3b1204be589`,
+   reproducible 0.1.1 bundle, updated PKGBUILD/.SRCINFO and clean Arch build.
+   See VALIDATION.md for the exact archive hash and namcap findings.
+2. Live package lifecycle/GUI/hardware acceptance remains deferred; it must not
+   be claimed from the clean-container build.
 3. Obtain owner approval for public conversion, release upload and AUR push.
    Publish the exact tested source asset, then build with an empty source cache
    to verify the public URL and checksum. Keep experimental/deferred acceptance
@@ -76,6 +72,6 @@ References:
    On branch master, submit only PKGBUILD, .SRCINFO and the packaging LICENSE.
    No application Git history, source archive or built package belongs in AUR.
 
-No new clean-container build, namcap run, AUR authentication or push was done
-in this audit. See PUBLISHING.md for the publication procedure and
+The follow-up preparation completed clean-container/namcap checks and attempted
+AUR authentication (rejected publickey); no AUR push has been done. See PUBLISHING.md for the publication procedure and
 VALIDATION.md for historical candidate records.

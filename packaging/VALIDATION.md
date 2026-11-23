@@ -85,3 +85,46 @@ GUI or hardware acceptance was performed, in accordance with the owner's
 request to defer testing. Automated make check and staged install are recorded
 in docs/VALIDATION.md. Existing v0.1.0 tag remains unchanged; publication is
 still a separately approved action.
+
+
+## Experimental 0.1.1 — 2026-11-23
+
+Source commit: `77dfbfc344d86fd7f5ad82facabea3b1204be589`.
+SHA256: `b0992c43001a001699f4f70d925b8d03e7ec29a14faafc00795675091e02a3eb`.
+Bundle: `dist/candidate-77dfbfc344d8/`. Independent git archive/gzip runs are
+byte-identical. Historical v0.1.0 tag remains unchanged.
+
+A fresh Docker container used the official archlinux:base image
+`sha256:d4594bb2300cba11f41c2f27923eb56f63d9988909c402f9c95517d1e362c899`,
+updated with pacman -Syu. Only the candidate bundle was mounted read-only and
+an output directory writable; no host devices, private repositories, SSH keys
+or Docker socket were mounted. base-devel, python, systemd, git and namcap were
+installed inside the container. makepkg ran as an unprivileged builder with
+full dependency checks (no --nodeps) and the exact cached source archive.
+
+Passed: checksums; build/check/package; five fake-EC C suites and 29 Python
+tests; Arch hardening/LTO; makepkg-generated .SRCINFO equality; package listing;
+extracted CLI --help/--version (0.1.1); license/provenance/desktop/polkit files;
+helper permissions 0755 without setuid; static systemd-analyze verify.
+The package was extracted into /stage, not installed/activated on the host.
+
+namcap PKGBUILD: no findings. Primary package: no errors, three warnings about
+sh/python3 interpreter names and possibly unused systemd, as in the historical
+record. Python is declared, sh comes from Arch base/bash, systemd is required
+for service integration. The automatic debug package reports two missing
+build-id link targets when examined alone: those targets are production
+executables in the primary package. Extracting both packages together in a
+second disposable container verified that all build-id links resolve.
+No debug-link failure remains in the combined installation layout.
+
+Logs, dependency versions, packages and generated metadata are in
+`dist/aur-0.1.1-validation/`. Tests only simulate EC, including maximum-test
+messages. No real maximum, hardware, GUI, live service/package lifecycle or
+sleep/resume acceptance was run. Public-download validation and AUR publication
+are separate subsequent steps.
+
+Read-only prepublication checks: the standalone Git object history contains
+only expected project paths/text blobs; common private-key/token patterns found
+no matches. AUR SSH host key matches the official HTTPS-published Ed25519
+fingerprint. Existing SSH authentication was rejected with publickey; owner
+account/key setup is still needed before an AUR push.
